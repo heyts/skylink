@@ -3,9 +3,11 @@ package ingest
 import (
 	"bytes"
 	"context"
+	"database/sql"
 	"encoding/json"
 	"fmt"
 	"io"
+	"log"
 	"log/slog"
 	"net/http"
 	"net/url"
@@ -25,13 +27,22 @@ import (
 type Server struct {
 	logger                     *slog.Logger
 	wsEndpoint                 string
+	dsn                        string
+	db                         *sql.DB
 	customDomainQueryStringMap *CustomDomainQueryString
 }
 
-func NewServer() *Server {
+func NewServer(dsn *string) *Server {
+	db, err := sql.Open("sqlite3", *dsn)
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	s := &Server{
 		logger:     slog.New(slog.NewTextHandler(os.Stderr, nil)),
 		wsEndpoint: "wss://bsky.network/xrpc/com.atproto.sync.subscribeRepos",
+		dsn:        *dsn,
+		db:         db,
 		customDomainQueryStringMap: NewCustomDomainQueryString(
 			map[string][]string{
 				"youtube.com": {"v"},
