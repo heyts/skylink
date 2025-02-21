@@ -22,6 +22,7 @@ import (
 	"github.com/bluesky-social/indigo/repo"
 	"github.com/gorilla/websocket"
 	"github.com/heyts/skylinks/models"
+	"github.com/heyts/skylinks/utils"
 )
 
 type Server struct {
@@ -29,7 +30,7 @@ type Server struct {
 	wsEndpoint                 string
 	dsn                        string
 	db                         *sql.DB
-	customDomainQueryStringMap *CustomDomainQueryString
+	customDomainQueryStringMap *utils.CustomDomainQueryString
 }
 
 func NewServer(dsn *string) *Server {
@@ -43,7 +44,7 @@ func NewServer(dsn *string) *Server {
 		wsEndpoint: "wss://bsky.network/xrpc/com.atproto.sync.subscribeRepos",
 		dsn:        *dsn,
 		db:         db,
-		customDomainQueryStringMap: NewCustomDomainQueryString(
+		customDomainQueryStringMap: utils.NewCustomDomainQueryString(
 			map[string][]string{
 				"youtube.com": {"v"},
 			},
@@ -75,7 +76,9 @@ func (s *Server) Start() error {
 					s.logger.Debug("GetRecord", "msg", err)
 				}
 
-				op := Op{evt.Repo, op.Path, cid}
+				r := strings.Split(op.Path, "/")
+				collection, recordKey := r[0], r[1]
+				op := OpMeta{evt.Repo, collection, recordKey, cid}
 
 				switch record := rec.(type) {
 				case *bsky.FeedPost:
@@ -95,14 +98,11 @@ func (s *Server) Start() error {
 	return err
 }
 
-func (s *Server) HandleFeedPost(op Op, record *bsky.FeedPost) error {
+func (s *Server) HandleFeedPost(op OpMeta, record *bsky.FeedPost) error {
 	actor, err := s.resolveUserIdentity(op.Repo)
 	if err != nil {
 		return err
 	}
-
-	r := strings.Split(op.Path, "/")
-	collection, recordKey := r[0], r[1]
 
 	mentions := []string{}
 	tags := []string{}
@@ -136,8 +136,8 @@ func (s *Server) HandleFeedPost(op Op, record *bsky.FeedPost) error {
 	model := &models.HyperLink{
 		CreatedAt:  &createdAt,
 		CID:        op.Cid,
-		Collection: collection,
-		RecordKey:  recordKey,
+		Collection: op.Collection,
+		RecordKey:  op.RecordKey,
 		Actor:      actor,
 		Languages:  record.Langs,
 		Text:       record.Text,

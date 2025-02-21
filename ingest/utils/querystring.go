@@ -1,4 +1,4 @@
-package ingest
+package utils
 
 type CustomDomainQueryString struct {
 	data map[string]map[string]struct{}
