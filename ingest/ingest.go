@@ -25,12 +25,16 @@ import (
 	"github.com/heyts/skylinks/utils"
 )
 
+var resolverPolicy = map[string][]string{
+	"youtube.com": {"v"},
+}
+
 type Server struct {
-	logger                     *slog.Logger
-	wsEndpoint                 string
-	dsn                        string
-	db                         *sql.DB
-	customDomainQueryStringMap *utils.CustomDomainQueryString
+	logger         *slog.Logger
+	wsEndpoint     string
+	dsn            string
+	db             *sql.DB
+	domainResolver *utils.DomainResolver
 }
 
 func NewServer(dsn *string) *Server {
@@ -40,15 +44,11 @@ func NewServer(dsn *string) *Server {
 	}
 
 	s := &Server{
-		logger:     slog.New(slog.NewTextHandler(os.Stderr, nil)),
-		wsEndpoint: "wss://bsky.network/xrpc/com.atproto.sync.subscribeRepos",
-		dsn:        *dsn,
-		db:         db,
-		customDomainQueryStringMap: utils.NewCustomDomainQueryString(
-			map[string][]string{
-				"youtube.com": {"v"},
-			},
-		),
+		logger:         slog.New(slog.NewTextHandler(os.Stderr, nil)),
+		wsEndpoint:     "wss://bsky.network/xrpc/com.atproto.sync.subscribeRepos",
+		dsn:            *dsn,
+		db:             db,
+		domainResolver: utils.NewDomainResolver(resolverPolicy),
 	}
 
 	return s
@@ -177,7 +177,7 @@ func (s *Server) normalizeCanonicalURL(url *url.URL) *url.URL {
 		hostname = strings.Join(h[len(h)-2:], ".")
 	}
 
-	allowed := s.customDomainQueryStringMap.Get(hostname)
+	allowed := s.domainResolver.Get(hostname)
 
 	q := url.Query()
 
