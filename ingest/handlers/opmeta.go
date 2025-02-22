@@ -1,4 +1,4 @@
-package ingest
+package handlers
 
 import "github.com/ipfs/go-cid"
 

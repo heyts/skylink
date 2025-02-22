@@ -14,7 +14,7 @@ type HyperLink struct {
 	Collection string
 	RecordKey  string
 	Text       string
-	Actor      *bsky.ActorDefs_ProfileView
+	Actor      *bsky.ActorDefs_ProfileViewDetailed
 	Languages  []string
 	Mentions   []string
 	Tags       []string
