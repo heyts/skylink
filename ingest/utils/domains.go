@@ -81,7 +81,7 @@ func (d *DomainResolver) parseURL(raw string, resolve bool) (*url.URL, error) {
 	}
 
 	if !url.IsAbs() {
-		return nil, fmt.Errorf("Cannot Resolve a non-absolute URL")
+		return nil, fmt.Errorf("cannot resolve relative URL: %s", url)
 	}
 
 	url, err = d.normalizeURL(url)
