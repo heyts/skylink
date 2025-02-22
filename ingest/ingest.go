@@ -10,7 +10,6 @@ import (
 	"log"
 	"log/slog"
 	"net/http"
-	"net/url"
 	"os"
 	"strings"
 	"time"
@@ -119,11 +118,11 @@ func (s *Server) HandleFeedPost(op OpMeta, record *bsky.FeedPost) error {
 					tags = append(tags, ft.RichtextFacet_Tag.Tag)
 				}
 				if ft.RichtextFacet_Link != nil {
-					url := s.createCanonicalURL(ft.RichtextFacet_Link.Uri, true)
-					if url == nil {
-						continue
+					url, err := s.domainResolver.Resolve(ft.RichtextFacet_Link.Uri)
+					if err != nil {
+						return err
 					}
-					uris = append(uris, url.String())
+					uris = append(uris, url)
 				}
 			}
 		}
@@ -150,77 +149,6 @@ func (s *Server) HandleFeedPost(op OpMeta, record *bsky.FeedPost) error {
 		s.logger.Info("record", "val", model)
 	}
 	return nil
-}
-
-func (s *Server) createCanonicalURL(raw string, resolve bool) *url.URL {
-	url, err := url.Parse(raw)
-	if err != nil {
-		fmt.Printf("%s", err)
-	}
-
-	if !url.IsAbs() {
-		return nil
-	}
-
-	url = s.normalizeCanonicalURL(url)
-	if resolve {
-		url = s.resolveCanonicalURL(url)
-	}
-	return url
-}
-
-func (s *Server) normalizeCanonicalURL(url *url.URL) *url.URL {
-	hostname := url.Hostname()
-	h := strings.Split(url.Hostname(), ".")
-
-	if len(h) >= 2 {
-		hostname = strings.Join(h[len(h)-2:], ".")
-	}
-
-	allowed := s.domainResolver.Get(hostname)
-
-	q := url.Query()
-
-	url.RawQuery = ""
-	url.Fragment = ""
-	if len(allowed) > 0 {
-		for key := range q {
-			if _, ok := allowed[key]; !ok {
-				q.Del(key)
-			}
-		}
-		url.RawQuery = q.Encode()
-	}
-	return url
-}
-
-func (s *Server) resolveCanonicalURL(url *url.URL) *url.URL {
-	client := &http.Client{
-		CheckRedirect: func(req *http.Request, via []*http.Request) error { return http.ErrUseLastResponse },
-		Timeout:       2 * time.Second,
-	}
-
-	resp, err := client.Head(url.String())
-	if err != nil {
-		return url
-	}
-
-	if resp.StatusCode == 200 {
-		return url
-	}
-
-	if resp.StatusCode == 301 ||
-		resp.StatusCode == 302 ||
-		resp.StatusCode == 303 ||
-		resp.StatusCode == 304 ||
-		resp.StatusCode == 305 ||
-		resp.StatusCode == 306 ||
-		resp.StatusCode == 307 ||
-		resp.StatusCode == 308 {
-		u := resp.Header.Get("Location")
-		url = s.createCanonicalURL(u, false)
-	}
-	return url
 }
 
 func (*Server) resolveUserIdentity(did string) (*bsky.ActorDefs_ProfileView, error) {
