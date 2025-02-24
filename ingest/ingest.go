@@ -85,7 +85,7 @@ func (s *Server) Start() error {
 
 				switch record := rec.(type) {
 				case *bsky.FeedPost:
-					err := s.recordHandlers.FeedPostHandler(op, record)
+					go s.recordHandlers.FeedPostHandler(op, record)
 					if err != nil {
 						s.logger.Error("FeedPost_RecordHandler", "msg", err)
 					}

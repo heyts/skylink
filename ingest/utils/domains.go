@@ -1,6 +1,8 @@
 package utils
 
 import (
+	"crypto/md5"
+	"encoding/hex"
 	"fmt"
 	"net/http"
 	"net/url"
@@ -12,15 +14,6 @@ var disableRedirectsFunc = func(req *http.Request, via []*http.Request) error {
 	return http.ErrUseLastResponse
 }
 
-// FIXME: Replace with a DomainResolver struct
-// that does the normalization and resolution in
-// one go:
-// dr := DomainResolver(domainsMap)
-// url := dr.ResolveURL("https://google.com?f=3432")
-//
-// - createCanonicalURL
-// - normalizeCanonicalURL
-// - resolveCanonicalURL
 type DomainResolver struct {
 	items  map[string]map[string]struct{}
 	client *http.Client
@@ -152,4 +145,10 @@ func (d *DomainResolver) resolveURL(url *url.URL) (*url.URL, error) {
 		}
 	}
 	return url, nil
+}
+
+func MD5Encode(URL string) string {
+	algorithm := md5.New()
+	algorithm.Write([]byte(URL))
+	return hex.EncodeToString(algorithm.Sum(nil))
 }
