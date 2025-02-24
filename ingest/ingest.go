@@ -22,7 +22,9 @@ import (
 )
 
 var resolverPolicy = map[string][]string{
-	"youtube.com": {"v"},
+	"youtube.com":     {"v"},
+	"ycombinator.com": {"item"},
+	"bsky.app":        {"q"},
 }
 
 type Server struct {
@@ -98,5 +100,6 @@ func (s *Server) Start() error {
 
 	sched := sequential.NewScheduler("myfirehose", rsc.EventHandler)
 	err = events.HandleRepoStream(context.Background(), con, sched, s.logger)
+	s.logger.Error("server", "err", err)
 	return err
 }
