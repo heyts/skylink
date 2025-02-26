@@ -47,6 +47,22 @@ func (d *DomainResolver) Set(domain string, key string) (string, bool) {
 }
 
 func (d *DomainResolver) HasKey(domain, key string) bool {
+	if strings.HasPrefix(key, "!!") {
+		return false
+	}
+	if keys, ok := d.items[domain]; ok {
+		if _, ok = keys[key]; ok {
+			return true
+		}
+	}
+	return false
+}
+
+func (d *DomainResolver) HasDirective(domain, key string) bool {
+	if !strings.HasPrefix(key, "!!") {
+		return false
+	}
+
 	if keys, ok := d.items[domain]; ok {
 		if _, ok = keys[key]; ok {
 			return true
@@ -75,6 +91,7 @@ func (d *DomainResolver) Resolve(raw string) (string, error) {
 }
 
 func (d *DomainResolver) parseURL(raw string, resolve bool) (*url.URL, error) {
+	raw = strings.ToLower(raw)
 	url, err := url.Parse(raw)
 	if err != nil {
 		return nil, err
@@ -121,6 +138,12 @@ func (d *DomainResolver) normalizeURL(url *url.URL) (*url.URL, error) {
 }
 
 func (d *DomainResolver) resolveURL(url *url.URL) (*url.URL, error) {
+	hostname := url.Hostname()
+
+	if d.HasDirective(hostname, "!!no-redirect") {
+		return url, nil
+	}
+
 	resp, err := d.client.Head(url.String())
 	if err != nil {
 		return nil, err

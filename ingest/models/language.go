@@ -57,17 +57,17 @@ func NewLanguage(raw string) *Language {
 		CreatedAt: &now,
 		UpdatedAt: &now,
 	}
-	expl := strings.Split(raw, "-")
+	segments := strings.Split(raw, "-")
 
-	if len(expl) == 1 || len(expl) > 2 {
-		lang.Country = expl[0]
-		lang.ID = expl[0]
+	if len(segments) == 1 || len(segments) > 2 {
+		lang.Country = segments[0]
+		lang.ID = raw
 	}
 
-	if len(expl) == 2 {
-		lang.Country = expl[0]
-		lang.ID = expl[0]
-		lang.Language = expl[1]
+	if len(segments) == 2 {
+		lang.Country = segments[0]
+		lang.ID = raw
+		lang.Language = segments[1]
 	}
 	return lang
 }

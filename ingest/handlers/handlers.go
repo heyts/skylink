@@ -13,6 +13,7 @@ type RecordHandler struct {
 	db             *sqlx.DB
 	domainResolver *utils.DomainResolver
 	xrpcClient     *xrpc.Client
+	recordsChan    <-chan any
 }
 
 func NewRecordHandler(logger *slog.Logger, db *sqlx.DB, domainResolver *utils.DomainResolver) *RecordHandler {

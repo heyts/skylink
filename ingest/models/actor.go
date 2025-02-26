@@ -60,7 +60,6 @@ type Actor struct {
 func (a Actor) LogValue() slog.Value {
 	return slog.GroupValue(
 		slog.String("id", a.ID),
-		slog.String("name", a.DisplayName),
 		slog.String("handle", a.Handle),
 	)
 }
@@ -92,11 +91,11 @@ func (a *Actor) Insert(db *sqlx.DB) (bool, error) {
 	return true, nil
 }
 
-func (a *Actor) InsertFromPost(db *sqlx.DB, post_id string) (bool, error) {
+func (a *Actor) InsertFromPost(db *sqlx.DB, post_id, actor_id string) (bool, error) {
 	tx := db.MustBegin()
 	_, err := tx.Exec(insertActorFromMentionQuery,
 		post_id,
-		a.ID,
+		actor_id,
 	)
 
 	if err != nil {

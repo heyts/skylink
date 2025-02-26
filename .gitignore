@@ -34,3 +34,4 @@
 /frontend/config/master.key
 
 /sql/skylink.db
+/sql/skylink.db.*

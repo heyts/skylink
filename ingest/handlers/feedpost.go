@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"github.com/bluesky-social/indigo/api/bsky"
@@ -9,32 +10,10 @@ import (
 	"github.com/heyts/skylinks/utils"
 )
 
+var PostHasNoLinkErr = fmt.Errorf("Post contains no link")
+
 func (h *RecordHandler) FeedPostHandler(op OpMeta, record *bsky.FeedPost) error {
-	actor, err := h.ParseActorFromDID(op.Repo)
-	if err != nil {
-		return err
-	}
 	createdAt, err := time.Parse(time.RFC3339Nano, record.CreatedAt)
-
-	post := models.Post{
-		CreatedAt:  &createdAt,
-		UpdatedAt:  &createdAt,
-		ID:         op.Cid.String(),
-		Collection: op.Collection,
-		RecordKey:  op.RecordKey,
-		Text:       record.Text,
-		Actor:      actor,
-	}
-
-	languages := []*models.Language{}
-	if len(record.Langs) > 0 {
-		for _, lang := range record.Langs {
-			lang := models.NewLanguage(lang)
-			if lang != nil {
-				languages = append(languages, lang)
-			}
-		}
-	}
 
 	mentions := []*models.Actor{}
 	tags := []*models.Tag{}
@@ -68,10 +47,11 @@ func (h *RecordHandler) FeedPostHandler(op OpMeta, record *bsky.FeedPost) error 
 						return err
 					}
 					link := &models.Link{
-						CreatedAt: &createdAt,
-						UpdatedAt: &createdAt,
-						ID:        utils.MD5Encode(url),
-						Url:       url,
+						CreatedAt:   &createdAt,
+						UpdatedAt:   &createdAt,
+						ID:          utils.MD5Encode(url),
+						OriginalUrl: ft.RichtextFacet_Link.Uri,
+						Url:         url,
 					}
 					links = append(links, link)
 				}
@@ -79,69 +59,67 @@ func (h *RecordHandler) FeedPostHandler(op OpMeta, record *bsky.FeedPost) error 
 		}
 	}
 
+	// If the record doesn't contain any link
+	// we can skip it to preserve resources
+	if len(links) == 0 {
+		return PostHasNoLinkErr
+	}
+
+	actor, err := h.ParseActorFromDID(op.Repo)
+	if err != nil {
+		return err
+	}
+
+	post := models.Post{
+		CreatedAt:  &createdAt,
+		UpdatedAt:  &createdAt,
+		ID:         op.Cid.String(),
+		Collection: op.Collection,
+		RecordKey:  op.RecordKey,
+		Text:       record.Text,
+		Actor:      actor,
+	}
+
+	languages := []*models.Language{}
+	if len(record.Langs) > 0 {
+		for _, lang := range record.Langs {
+			lang := models.NewLanguage(lang)
+			if lang != nil {
+				languages = append(languages, lang)
+			}
+		}
+	}
+
 	if len(links) > 0 {
 		h.logger.Info("POS", "post", post)
 		go post.Insert(h.db)
-		if err != nil {
-			h.logger.Error("insert post", "err", err)
-		}
 
 		h.logger.Info("ACT", "actor", actor)
-		_, err = actor.Insert(h.db)
-		if err != nil {
-			h.logger.Error("insert actor", "err", err)
-		}
+		go actor.Insert(h.db)
 
 		if len(languages) > 0 {
 			for _, lang := range languages {
 				h.logger.Info("LNG", "language", lang)
 				go lang.Insert(h.db)
-				if err != nil {
-					h.logger.Error("insert lang", "err", err)
-				}
 				go lang.InsertFromPost(h.db, post.ID)
-				if err != nil {
-					h.logger.Error("insert language join table", "err", err)
-				}
 			}
 		}
 
 		for _, tag := range tags {
 			h.logger.Info("TAG", "tag", tag)
 			go tag.Insert(h.db)
-			if err != nil {
-				h.logger.Error("insert tag", "err", err)
-			}
 			go tag.InsertFromPost(h.db, post.ID)
-			if err != nil {
-				h.logger.Error("insert tag join table", "err", err)
-			}
 		}
 
 		for _, mention := range mentions {
 			go mention.Insert(h.db)
-			if err != nil {
-				h.logger.Error("insert mention", "err", err)
-			}
-
-			go mention.InsertFromPost(h.db, post.ID)
-			if err != nil {
-				h.logger.Error("insert mention join table", "err", err)
-			}
-
+			go mention.InsertFromPost(h.db, post.ID, mention.ID)
 			h.logger.Info("MEN", "mention", mention)
 		}
 
 		for _, link := range links {
 			go link.Insert(h.db)
-			if err != nil {
-				h.logger.Error("insert link", "err", err)
-			}
-
 			go link.InsertFromPost(h.db, post.ID)
-			if err != nil {
-				h.logger.Error("insert link join table", "err", err)
-			}
 			h.logger.Info("LNK", "link", link)
 		}
 	}
@@ -149,7 +127,7 @@ func (h *RecordHandler) FeedPostHandler(op OpMeta, record *bsky.FeedPost) error 
 }
 
 func (h *RecordHandler) ParseActorFromDID(did string) (*models.Actor, error) {
-	ctx, _ := context.WithCancel(context.Background())
+	ctx := context.Background()
 	profile, err := bsky.ActorGetProfile(ctx, h.xrpcClient, did)
 	if err != nil {
 		return nil, err
@@ -199,7 +177,7 @@ func (h *RecordHandler) ParseActorFromDID(did string) (*models.Actor, error) {
 		Avatar:         *profile.Avatar,
 		Banner:         *profile.Banner,
 		FollowersCount: *profile.FollowersCount,
-		FollowsCount:   *profile.FollowersCount,
+		FollowsCount:   *profile.FollowsCount,
 		PostsCount:     *profile.PostsCount,
 	}
 

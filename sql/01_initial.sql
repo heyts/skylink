@@ -38,6 +38,7 @@ CREATE TABLE links (
     updated_at TIMESTAMP,
 
     id varchar PRIMARY KEY,
+    original_url varchar,
     url varchar,
     count integer
 );

@@ -25,6 +25,7 @@ var resolverPolicy = map[string][]string{
 	"youtube.com":     {"v"},
 	"ycombinator.com": {"item"},
 	"bsky.app":        {"q"},
+	"instagram.com":   {"!!no-redirect"},
 }
 
 type Server struct {
@@ -83,6 +84,7 @@ func (s *Server) Start() error {
 					Collection: collection,
 					RecordKey:  recordKey,
 					Cid:        cid,
+					// Record:     rec,
 				}
 
 				switch record := rec.(type) {

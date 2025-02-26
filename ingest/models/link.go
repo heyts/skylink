@@ -38,9 +38,10 @@ type Link struct {
 	CreatedAt *time.Time
 	UpdatedAt *time.Time
 
-	ID    string
-	Url   string
-	Count int
+	ID          string
+	OriginalUrl string
+	Url         string
+	Count       int
 }
 
 func (l Link) LogValue() slog.Value {
