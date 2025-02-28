@@ -62,7 +62,7 @@ func NewServer(dsn *string) *Server {
 func (s *Server) Start() error {
 	con, _, err := websocket.DefaultDialer.Dial(s.wsEndpoint, http.Header{})
 	if err != nil {
-		s.logger.Error(fmt.Sprintf("Could not connect to %q, aborting.\n", s.wsEndpoint))
+		s.logger.Error(fmt.Sprintf("Could not connect to %q: %v\n", s.wsEndpoint, err))
 		os.Exit(1)
 	}
 
