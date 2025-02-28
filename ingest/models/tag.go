@@ -18,7 +18,8 @@ var insertTagQuery = `
 		, $2
 		, $3
 		, $4
-	) ON CONFLICT (id) DO NOTHING;
+	) ON CONFLICT (id) DO UPDATE SET
+	 	updated_at = NOW();
 `
 
 var insertTagFromPostQuery = `

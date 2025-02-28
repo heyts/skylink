@@ -10,6 +10,8 @@ import (
 	"time"
 )
 
+const MAX_REDIRECTS = 10
+
 var disableRedirectsFunc = func(req *http.Request, via []*http.Request) error {
 	return http.ErrUseLastResponse
 }
@@ -72,47 +74,21 @@ func (d *DomainResolver) HasDirective(domain, key string) bool {
 }
 
 func (d *DomainResolver) Resolve(raw string) (string, error) {
-	url, err := d.parseURL(raw, true)
+	url, err := url.Parse(raw)
 	if err != nil {
-		return raw, err
+		return "", err
 	}
 
-	url, err = d.normalizeURL(url)
-	if err != nil {
-		return raw, err
+	if !url.IsAbs() {
+		return "", fmt.Errorf("cannot resolve relative URL: %s", url)
 	}
 
-	url, err = d.resolveURL(url)
+	url, err = d.resolveURLRecursive(url)
 	if err != nil {
 		return raw, err
 	}
 
 	return url.String(), nil
-}
-
-func (d *DomainResolver) parseURL(raw string, resolve bool) (*url.URL, error) {
-	raw = strings.ToLower(raw)
-	url, err := url.Parse(raw)
-	if err != nil {
-		return nil, err
-	}
-
-	if !url.IsAbs() {
-		return nil, fmt.Errorf("cannot resolve relative URL: %s", url)
-	}
-
-	url, err = d.normalizeURL(url)
-	if err != nil {
-		return nil, err
-	}
-
-	if resolve {
-		url, err = d.resolveURL(url)
-		if err != nil {
-			return nil, err
-		}
-	}
-	return url, nil
 }
 
 func (d *DomainResolver) normalizeURL(url *url.URL) (*url.URL, error) {
@@ -137,37 +113,39 @@ func (d *DomainResolver) normalizeURL(url *url.URL) (*url.URL, error) {
 	return url, nil
 }
 
-func (d *DomainResolver) resolveURL(url *url.URL) (*url.URL, error) {
-	hostname := url.Hostname()
+func (d *DomainResolver) resolveURLRecursive(url *url.URL) (*url.URL, error) {
+	redirectCount := 0
 
-	if d.HasDirective(hostname, "!!no-redirect") {
-		return url, nil
-	}
+	for {
 
-	resp, err := d.client.Head(url.String())
-	if err != nil {
-		return nil, err
-	}
-
-	if resp.StatusCode == 200 {
-		return url, nil
-	}
-
-	if resp.StatusCode == 301 ||
-		resp.StatusCode == 302 ||
-		resp.StatusCode == 303 ||
-		resp.StatusCode == 304 ||
-		resp.StatusCode == 305 ||
-		resp.StatusCode == 306 ||
-		resp.StatusCode == 307 ||
-		resp.StatusCode == 308 {
-		u := resp.Header.Get("Location")
-		url, err = d.parseURL(u, false)
+		if redirectCount > MAX_REDIRECTS {
+			return nil, fmt.Errorf("too many redirects")
+		}
+		resp, err := d.client.Get(url.String())
 		if err != nil {
 			return nil, err
 		}
+
+		if resp.StatusCode == 200 {
+			url, err = d.normalizeURL(url)
+			if err != nil {
+				return nil, err
+			}
+			return url, nil
+		}
+
+		if resp.StatusCode > 300 || resp.StatusCode < 308 {
+			curr := resp.Header.Get("Location")
+			if curr == "" {
+				return nil, fmt.Errorf("malformed location Header: %s", curr)
+			}
+			url, err = url.Parse(curr)
+			if err != nil {
+				return nil, err
+			}
+			redirectCount++
+		}
 	}
-	return url, nil
 }
 
 func MD5Encode(URL string) string {

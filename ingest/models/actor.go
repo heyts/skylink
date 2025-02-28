@@ -31,7 +31,11 @@ var insertActorQuery = `
 		, $8
 		, $9
 		, $10
-	) ON CONFLICT (id) DO NOTHING;
+	) ON CONFLICT (id) DO UPDATE SET
+	 	updated_at = NOW(),
+		followers_count = excluded.followers_count,
+		follows_count = excluded.follows_count,
+		posts_count = excluded.posts_count;
 `
 
 var insertActorFromMentionQuery = `
@@ -85,6 +89,7 @@ func (a *Actor) Insert(db *sqlx.DB) (bool, error) {
 
 	if err != nil {
 		tx.Rollback()
+		fmt.Printf("err: %v", err)
 		return false, err
 	}
 	tx.Commit()

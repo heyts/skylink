@@ -1,6 +1,7 @@
 package models
 
 import (
+	"fmt"
 	"log/slog"
 	"time"
 
@@ -13,6 +14,7 @@ var insertLinkQuery = `
 		, updated_at
 		, id
 		, url
+		, original_url
 		, count
 	) VALUES (
 		$1
@@ -20,9 +22,10 @@ var insertLinkQuery = `
 		, $3
 		, $4
 		, $5
+		, $6
 	) ON CONFLICT (id) DO UPDATE SET
-	 	updated_at = datetime('now'),
-		count = count + 1
+	 	updated_at = NOW(),
+		count = links.count + 1
 `
 
 var insertLinkFromPostQuery = `
@@ -58,11 +61,13 @@ func (l *Link) Insert(db *sqlx.DB) (bool, error) {
 		l.UpdatedAt,
 		l.ID,
 		l.Url,
+		l.OriginalUrl,
 		1,
 	)
 
 	if err != nil {
 		tx.Rollback()
+		fmt.Printf("Link: %+v", err)
 		return false, err
 	}
 	tx.Commit()
@@ -78,6 +83,7 @@ func (l *Link) InsertFromPost(db *sqlx.DB, post_id string) (bool, error) {
 
 	if err != nil {
 		tx.Rollback()
+		fmt.Printf("LinkFromPost: %+v", err)
 		return false, err
 	}
 	tx.Commit()

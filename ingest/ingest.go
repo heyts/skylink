@@ -19,13 +19,17 @@ import (
 	"github.com/heyts/skylinks/handlers"
 	"github.com/heyts/skylinks/utils"
 	"github.com/jmoiron/sqlx"
+
+	_ "github.com/lib/pq"
 )
 
 var resolverPolicy = map[string][]string{
 	"youtube.com":     {"v"},
-	"ycombinator.com": {"item"},
+	"ycombinator.com": {"id"},
 	"bsky.app":        {"q"},
-	"instagram.com":   {"!!no-redirect"},
+	"instagram.com":   {"next"},
+	"facebook.com":    {"id", "story_fbid", "next"},
+	"google.com":      {"q"},
 }
 
 type Server struct {
@@ -36,7 +40,7 @@ type Server struct {
 }
 
 func NewServer(dsn *string) *Server {
-	db, err := sqlx.Open("sqlite3", *dsn)
+	db, err := sqlx.Open("postgres", *dsn)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -84,7 +88,6 @@ func (s *Server) Start() error {
 					Collection: collection,
 					RecordKey:  recordKey,
 					Cid:        cid,
-					// Record:     rec,
 				}
 
 				switch record := rec.(type) {

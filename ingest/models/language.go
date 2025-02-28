@@ -1,6 +1,7 @@
 package models
 
 import (
+	"fmt"
 	"log/slog"
 	"strings"
 	"time"
@@ -60,13 +61,13 @@ func NewLanguage(raw string) *Language {
 	segments := strings.Split(raw, "-")
 
 	if len(segments) == 1 || len(segments) > 2 {
-		lang.Country = segments[0]
-		lang.ID = raw
+		lang.Country = strings.ToLower(segments[0])
+		lang.ID = lang.Country
 	}
 
 	if len(segments) == 2 {
-		lang.Country = segments[0]
-		lang.ID = raw
+		lang.Country = strings.ToLower(segments[0])
+		lang.ID = fmt.Sprintf("%s-%s", strings.ToLower(segments[0]), segments[1])
 		lang.Language = segments[1]
 	}
 	return lang
@@ -89,6 +90,7 @@ func (l *Language) Insert(db *sqlx.DB) (bool, error) {
 	)
 
 	if err != nil {
+		fmt.Printf("err %v", err)
 		tx.Rollback()
 		return false, err
 	}
@@ -104,6 +106,7 @@ func (l *Language) InsertFromPost(db *sqlx.DB, post_id string) (bool, error) {
 	)
 
 	if err != nil {
+		fmt.Printf("err %v", err)
 		tx.Rollback()
 		return false, err
 	}
