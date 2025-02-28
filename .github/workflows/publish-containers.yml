@@ -23,9 +23,9 @@ jobs:
       matrix:
         include:
           - dockerfile: ./frontend
-            image: ${{ env.REGISTRY }}/${{ github.actor }}/${{ github.repository }}-frontend
+            image: ghcr.io/${{ github.actor }}/${{ github.repository }}-frontend
           - dockerfile: ./ingest
-            image: ${{ env.REGISTRY }}/${{ github.actor }}/${{ github.repository }}-ingest
+            image: ghcr.io/${{ github.actor }}/${{ github.repository }}-ingest
     
     # Sets the permissions granted to the `GITHUB_TOKEN` for the actions in this job.
     permissions:
