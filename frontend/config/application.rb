@@ -23,5 +23,10 @@ module Frontend
     #
     # config.time_zone = "Central Time (US & Canada)"
     # config.eager_load_paths << Rails.root.join("extras")
+    
+    
+    # skylink default config
+    # The URL to the bluesky website to preview profiles and posts 
+    config.x.skylink.bsky_web_url = 'https://bsky.app'
   end
 end
