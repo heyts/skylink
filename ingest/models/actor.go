@@ -39,7 +39,7 @@ var insertActorQuery = `
 `
 
 var insertActorFromMentionQuery = `
-	INSERT INTO posts_mentions(
+	INSERT INTO mentions_posts(
 		post_id
 		, actor_id
 	) VALUES (
@@ -89,7 +89,7 @@ func (a *Actor) Insert(db *sqlx.DB) (bool, error) {
 
 	if err != nil {
 		tx.Rollback()
-		fmt.Printf("err: %v", err)
+		fmt.Printf("%v", err)
 		return false, err
 	}
 	tx.Commit()
@@ -105,6 +105,7 @@ func (a *Actor) InsertFromPost(db *sqlx.DB, post_id, actor_id string) (bool, err
 
 	if err != nil {
 		tx.Rollback()
+		fmt.Printf("%v", err)
 		return false, err
 	}
 	tx.Commit()

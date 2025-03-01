@@ -29,7 +29,7 @@ var insertLinkQuery = `
 `
 
 var insertLinkFromPostQuery = `
-INSERT INTO posts_links(
+INSERT INTO links_posts(
 		post_id
 		, link_id
 	) VALUES (
@@ -67,7 +67,7 @@ func (l *Link) Insert(db *sqlx.DB) (bool, error) {
 
 	if err != nil {
 		tx.Rollback()
-		fmt.Printf("Link: %+v", err)
+		fmt.Printf("%v", err)
 		return false, err
 	}
 	tx.Commit()
@@ -83,7 +83,7 @@ func (l *Link) InsertFromPost(db *sqlx.DB, post_id string) (bool, error) {
 
 	if err != nil {
 		tx.Rollback()
-		fmt.Printf("LinkFromPost: %+v", err)
+		fmt.Printf("%v", err)
 		return false, err
 	}
 	tx.Commit()

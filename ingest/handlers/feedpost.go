@@ -24,7 +24,7 @@ func (h *RecordHandler) FeedPostHandler(op OpMeta, record *bsky.FeedPost) error 
 		for _, f := range record.Facets {
 			for _, ft := range f.Features {
 				if ft.RichtextFacet_Mention != nil {
-					mention, err := h.ParseActorFromDID(op.Repo)
+					mention, err := h.ParseActorFromDID(ft.RichtextFacet_Mention.Did)
 					if err != nil {
 						h.logger.Error("actor resolution", "did", ft.RichtextFacet_Mention.Did, "err", err)
 						continue

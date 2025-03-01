@@ -1,6 +1,7 @@
 package models
 
 import (
+	"fmt"
 	"log/slog"
 	"time"
 
@@ -60,6 +61,7 @@ func (t *Tag) Insert(db *sqlx.DB) (bool, error) {
 
 	if err != nil {
 		tx.Rollback()
+		fmt.Printf("%v", err)
 		return false, err
 	}
 	tx.Commit()
@@ -75,6 +77,7 @@ func (t *Tag) InsertFromPost(db *sqlx.DB, post_id string) (bool, error) {
 
 	if err != nil {
 		tx.Rollback()
+		fmt.Printf("%v", err)
 		return false, err
 	}
 	tx.Commit()

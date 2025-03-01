@@ -26,7 +26,7 @@ var insertLanguageQuery = `
 `
 
 var insertLanguageFromPostQuery = `
-INSERT INTO posts_languages(
+INSERT INTO languages_posts(
 		post_id
 		, language_id
 	) VALUES (
@@ -90,8 +90,8 @@ func (l *Language) Insert(db *sqlx.DB) (bool, error) {
 	)
 
 	if err != nil {
-		fmt.Printf("err %v", err)
 		tx.Rollback()
+		fmt.Printf("%v", err)
 		return false, err
 	}
 	tx.Commit()
@@ -106,8 +106,8 @@ func (l *Language) InsertFromPost(db *sqlx.DB, post_id string) (bool, error) {
 	)
 
 	if err != nil {
-		fmt.Printf("err %v", err)
 		tx.Rollback()
+		fmt.Printf("%v", err)
 		return false, err
 	}
 	tx.Commit()
