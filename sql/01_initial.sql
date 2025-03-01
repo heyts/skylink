@@ -15,7 +15,7 @@ CREATE TABLE actors (
     posts_count INTEGER
 );
 CREATE UNIQUE INDEX actors_pk_idx ON actors (id);
-CREATE UNIQUE INDEX handles_idx ON actors (handle);
+CREATE INDEX handles_idx ON actors (handle);
 
 CREATE TABLE languages (
     created_at TIMESTAMP,
@@ -45,31 +45,6 @@ CREATE TABLE links (
 CREATE UNIQUE INDEX links_pk_idx ON links (id);
 CREATE UNIQUE INDEX urls_idx ON links (url);
 
-CREATE TABLE posts_links (
-    post_id varchar,
-    link_id varchar
-);
-CREATE UNIQUE INDEX posts_links_idx ON posts_links (post_id, link_id);
-
-CREATE TABLE posts_languages (
-    post_id varchar,
-    language_id varchar
-);
-CREATE UNIQUE INDEX posts_languages_idx ON posts_languages (post_id, language_id);
-
-
-CREATE TABLE posts_mentions (
-    post_id varchar,
-    actor_id varchar
-);
-CREATE UNIQUE INDEX posts_mentions_idx ON posts_mentions (post_id, actor_id);
-
-CREATE TABLE posts_tags (
-    post_id varchar,
-    tag_id varchar
-);
-CREATE UNIQUE INDEX posts_tags_idx ON posts_tags (post_id, tag_id);
-
 CREATE TABLE posts (
     created_at TIMESTAMP,
     updated_at TIMESTAMP,
@@ -94,3 +69,28 @@ CREATE TABLE tags (
 CREATE UNIQUE INDEX tags_idx ON tags (id);
 CREATE UNIQUE INDEX labels_idx ON tags (label);
 COMMIT;
+
+CREATE TABLE links_posts (
+    post_id varchar,
+    link_id varchar
+);
+CREATE UNIQUE INDEX links_posts_idx ON posts_links (post_id, link_id);
+
+CREATE TABLE languages_posts (
+    post_id varchar,
+    language_id varchar
+);
+CREATE UNIQUE INDEX languages_posts_idx ON posts_languages (post_id, language_id);
+
+
+CREATE TABLE mentions_posts (
+    post_id varchar,
+    actor_id varchar
+);
+CREATE UNIQUE INDEX mentions_posts_idx ON posts_mentions (post_id, actor_id);
+
+CREATE TABLE posts_tags (
+    post_id varchar,
+    tag_id varchar
+);
+CREATE UNIQUE INDEX posts_tags_idx ON posts_tags (post_id, tag_id);

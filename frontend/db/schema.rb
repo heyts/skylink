@@ -60,22 +60,22 @@ ActiveRecord::Schema[8.0].define(version: 0) do
     t.index ["id"], name: "posts_pk_idx", unique: true
   end
 
-  create_table "posts_languages", id: false, force: :cascade do |t|
+  create_table "languages_posts", id: false, force: :cascade do |t|
     t.string "post_id"
     t.string "language_id"
-    t.index ["post_id", "language_id"], name: "posts_languages_idx", unique: true
+    t.index ["post_id", "language_id"], name: "languages_posts_idx", unique: true
   end
 
-  create_table "posts_links", id: false, force: :cascade do |t|
+  create_table "links_posts", id: false, force: :cascade do |t|
     t.string "post_id"
     t.string "link_id"
-    t.index ["post_id", "link_id"], name: "posts_links_idx", unique: true
+    t.index ["post_id", "link_id"], name: "links_posts_idx", unique: true
   end
 
-  create_table "posts_mentions", id: false, force: :cascade do |t|
+  create_table "mentions_posts", id: false, force: :cascade do |t|
     t.string "post_id"
     t.string "actor_id"
-    t.index ["post_id", "actor_id"], name: "posts_mentions_idx", unique: true
+    t.index ["post_id", "actor_id"], name: "mentions_posts_idx", unique: true
   end
 
   create_table "posts_tags", id: false, force: :cascade do |t|
