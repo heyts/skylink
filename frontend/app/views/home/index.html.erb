@@ -1,0 +1,15 @@
+<h1>Top</h1>
+<ol>
+<% @links.each do |link| %>
+<li id="link-<%= link.id %>">
+    <%= link_to link.pretty_title, home_show_path(link.id), title: link.og_description %>  (<%= link_to 'link', link.url, target: :blank %>, <%= pluralize link.posts_count, 'post' %>)
+    <% if !link.og_description.blank? %>
+    <ul>
+    <li>
+    <%= link.og_description %>
+    </li></ul>
+    <% end %>
+</li>
+
+<% end %>
+</ol>
