@@ -7,4 +7,5 @@ type OpMeta struct {
 	Collection string
 	RecordKey  string
 	Cid        cid.Cid
+	Record     any
 }

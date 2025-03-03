@@ -74,13 +74,16 @@ CREATE TABLE links_posts (
     post_id varchar,
     link_id varchar
 );
-CREATE UNIQUE INDEX links_posts_idx ON posts_links (post_id, link_id);
+CREATE UNIQUE INDEX links_posts_idx ON links_posts(post_id, link_id);
+CREATE INDEX links_post_id_posts_idx ON links_posts(post_id);
+CREATE INDEX links_link_id_posts_idx ON links_posts(post_id);
+
 
 CREATE TABLE languages_posts (
     post_id varchar,
     language_id varchar
 );
-CREATE UNIQUE INDEX languages_posts_idx ON posts_languages (post_id, language_id);
+CREATE UNIQUE INDEX languages_posts_idx ON languages_posts (post_id, language_id);
 
 
 CREATE TABLE mentions_posts (

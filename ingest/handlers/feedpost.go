@@ -2,7 +2,9 @@ package handlers
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/bluesky-social/indigo/api/bsky"
@@ -12,8 +14,8 @@ import (
 
 var PostHasNoLinkErr = fmt.Errorf("Post contains no link")
 
-func (h *RecordHandler) FeedPostHandler(op OpMeta, record *bsky.FeedPost) error {
-	// createdAt, err := time.Parse(time.RFC3339Nano, record.CreatedAt)
+func (h *RecordHandler) FeedPostHandler(op OpMeta, record *bsky.FeedPost) {
+	// publishedAt, err := time.Parse(time.RFC3339Nano, record.CreatedAt)
 	createdAt := time.Now()
 
 	mentions := []*models.Actor{}
@@ -43,16 +45,56 @@ func (h *RecordHandler) FeedPostHandler(op OpMeta, record *bsky.FeedPost) error 
 				}
 
 				if ft.RichtextFacet_Link != nil {
-					url, err := h.domainResolver.Resolve(ft.RichtextFacet_Link.Uri)
+					url, meta, err := h.domainResolver.Resolve(ft.RichtextFacet_Link.Uri)
 					if err != nil {
-						return err
+						h.logger.Error("metadata resolution", "err", err)
+						return
 					}
+
+					rawImgopts := map[string]string{}
+					rawOpts := map[string]string{}
+
+					if meta != nil {
+						for k, v := range *meta {
+							if k == "title" ||
+								k == "og:title" ||
+								k == "og:image" ||
+								k == "og:description" ||
+								k == "og:site_name" {
+								continue
+							}
+
+							if strings.HasPrefix(k, "og:image:") {
+								rawImgopts[k] = v
+							} else {
+								rawOpts[k] = v
+							}
+						}
+					}
+
+					imgopts, err := json.Marshal(rawImgopts)
+					if err != nil {
+						h.logger.Error("JSON Encoding", "err", err)
+					}
+
+					opts, err := json.Marshal(rawOpts)
+					if err != nil {
+						h.logger.Error("JSON Encoding", "err", err)
+					}
+
 					link := &models.Link{
-						CreatedAt:   &createdAt,
-						UpdatedAt:   &createdAt,
-						ID:          utils.MD5Encode(url),
-						OriginalUrl: ft.RichtextFacet_Link.Uri,
-						Url:         url,
+						CreatedAt:      &createdAt,
+						UpdatedAt:      &createdAt,
+						ID:             utils.MD5Encode(url),
+						OriginalUrl:    ft.RichtextFacet_Link.Uri,
+						Url:            url,
+						Title:          meta.GetOrDefault("title", ""),
+						OGTitle:        meta.GetOrDefault("og:title", ""),
+						OGDescription:  meta.GetOrDefault("og:description", ""),
+						OGSiteName:     meta.GetOrDefault("og:site_name", ""),
+						OGImage:        meta.GetOrDefault("og:image", ""),
+						OGImageOptions: imgopts,
+						OGOptional:     opts,
 					}
 					links = append(links, link)
 				}
@@ -63,12 +105,12 @@ func (h *RecordHandler) FeedPostHandler(op OpMeta, record *bsky.FeedPost) error 
 	// If the record doesn't contain any link
 	// we can skip it to preserve resources
 	if len(links) == 0 {
-		return PostHasNoLinkErr
+		return
 	}
 
 	actor, err := h.ParseActorFromDID(op.Repo)
 	if err != nil {
-		return err
+		h.logger.Error("parse actor from DID", "err", err)
 	}
 
 	post := models.Post{
@@ -93,38 +135,72 @@ func (h *RecordHandler) FeedPostHandler(op OpMeta, record *bsky.FeedPost) error 
 
 	if len(links) > 0 {
 		h.logger.Info("POS", "post", post)
-		go post.Insert(h.db)
+		_, err := post.Insert(h.db)
+		if err != nil {
+			h.logger.Error("insert post", "err", err)
+		}
 
 		h.logger.Info("ACT", "actor", actor)
-		go actor.Insert(h.db)
+		_, err = actor.Insert(h.db)
+		if err != nil {
+			h.logger.Error("insert actor", "err", err)
+		}
 
 		if len(languages) > 0 {
 			for _, lang := range languages {
 				h.logger.Info("LNG", "language", lang)
-				go lang.Insert(h.db)
-				go lang.InsertFromPost(h.db, post.ID)
+				_, err = lang.Insert(h.db)
+				if err != nil {
+					h.logger.Error("insert language", "err", err)
+				}
+				_, err = lang.InsertFromPost(h.db, post.ID)
+				if err != nil {
+					h.logger.Error("insert language join", "err", err)
+				}
 			}
 		}
 
 		for _, tag := range tags {
 			h.logger.Info("TAG", "tag", tag)
-			go tag.Insert(h.db)
-			go tag.InsertFromPost(h.db, post.ID)
+			_, err = tag.Insert(h.db)
+			if err != nil {
+				h.logger.Error("insert tag", "err", err)
+			}
+
+			tag.InsertFromPost(h.db, post.ID)
+			if err != nil {
+				h.logger.Error("insert tag join", "err", err)
+			}
 		}
 
 		for _, mention := range mentions {
-			go mention.Insert(h.db)
-			go mention.InsertFromPost(h.db, post.ID, mention.ID)
+			_, err = mention.Insert(h.db)
+			if err != nil {
+				h.logger.Error("insert mention", "err", err)
+			}
+
+			_, err = mention.InsertFromPost(h.db, post.ID, mention.ID)
+			if err != nil {
+				h.logger.Error("insert mention join", "err", err)
+			}
+
 			h.logger.Info("MEN", "mention", mention)
 		}
 
 		for _, link := range links {
-			go link.Insert(h.db)
-			go link.InsertFromPost(h.db, post.ID)
+			_, err = link.Insert(h.db)
+			if err != nil {
+				h.logger.Error("insert link", "err", err)
+			}
+
+			_, err = link.InsertFromPost(h.db, post.ID)
+			if err != nil {
+				h.logger.Error("insert link join", "err", err)
+			}
+
 			h.logger.Info("LNK", "link", link)
 		}
 	}
-	return nil
 }
 
 func (h *RecordHandler) ParseActorFromDID(did string) (*models.Actor, error) {

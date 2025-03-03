@@ -7,6 +7,10 @@ toolchain go1.23.6
 require (
 	github.com/bluesky-social/indigo v0.0.0-20250220004253-63d4acc51da0
 	github.com/gorilla/websocket v1.5.3
+	github.com/ipfs/go-cid v0.4.1
+	github.com/jmoiron/sqlx v1.4.0
+	github.com/lib/pq v1.10.9
+	golang.org/x/net v0.23.0
 )
 
 require (
@@ -38,7 +42,6 @@ require (
 	github.com/ipfs/bbloom v0.0.4 // indirect
 	github.com/ipfs/go-block-format v0.2.0 // indirect
 	github.com/ipfs/go-blockservice v0.5.2 // indirect
-	github.com/ipfs/go-cid v0.4.1 // indirect
 	github.com/ipfs/go-datastore v0.6.0 // indirect
 	github.com/ipfs/go-ipfs-blockstore v1.3.1 // indirect
 	github.com/ipfs/go-ipfs-ds-help v1.1.1 // indirect
@@ -64,12 +67,10 @@ require (
 	github.com/jbenet/goprocess v0.1.4 // indirect
 	github.com/jinzhu/inflection v1.0.0 // indirect
 	github.com/jinzhu/now v1.1.5 // indirect
-	github.com/jmoiron/sqlx v1.4.0 // indirect
 	github.com/klauspost/compress v1.17.3 // indirect
 	github.com/klauspost/cpuid/v2 v2.2.7 // indirect
 	github.com/kr/pretty v0.3.1 // indirect
 	github.com/kr/text v0.2.0 // indirect
-	github.com/lib/pq v1.10.9 // indirect
 	github.com/mattn/go-isatty v0.0.20 // indirect
 	github.com/mattn/go-sqlite3 v1.14.24 // indirect
 	github.com/matttproud/golang_protobuf_extensions/v2 v2.0.0 // indirect

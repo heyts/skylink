@@ -4,14 +4,12 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	"log"
 	"log/slog"
 	"net/http"
 	"os"
 	"strings"
 
 	"github.com/bluesky-social/indigo/api/atproto"
-	"github.com/bluesky-social/indigo/api/bsky"
 	"github.com/bluesky-social/indigo/events"
 	"github.com/bluesky-social/indigo/events/schedulers/sequential"
 	"github.com/bluesky-social/indigo/repo"
@@ -33,27 +31,34 @@ var resolverPolicy = map[string][]string{
 }
 
 type Server struct {
-	logger         *slog.Logger
-	wsEndpoint     string
-	dsn            string
-	recordHandlers *handlers.RecordHandler
+	logger     *slog.Logger
+	wsEndpoint string
+	dsn        string
+	workChan   chan handlers.OpMeta
+	quitChan   chan struct{}
 }
 
-func NewServer(dsn *string) *Server {
-	db, err := sqlx.Open("postgres", *dsn)
-	if err != nil {
-		log.Fatal(err)
-	}
-
+func NewServer(dsn *string, numWorkers int) *Server {
 	logger := slog.New(slog.NewTextHandler(os.Stderr, nil))
 
-	rh := handlers.NewRecordHandler(logger, db, utils.NewDomainResolver(resolverPolicy))
+	db, err := sqlx.Open("postgres", *dsn)
+	if err != nil {
+		logger.Error("sqlx open", "err", err)
+	}
+
+	workChan := make(chan handlers.OpMeta)
+	quitChan := make(chan struct{})
 
 	s := &Server{
-		logger:         logger,
-		wsEndpoint:     "wss://bsky.network/xrpc/com.atproto.sync.subscribeRepos",
-		dsn:            *dsn,
-		recordHandlers: rh,
+		logger:     logger,
+		wsEndpoint: "wss://bsky.network/xrpc/com.atproto.sync.subscribeRepos",
+		dsn:        *dsn,
+		workChan:   workChan,
+		quitChan:   quitChan,
+	}
+
+	for range numWorkers {
+		go handlers.NewRecordHandler(workChan, quitChan, logger, db, utils.NewDomainResolver(resolverPolicy))
 	}
 
 	return s
@@ -62,7 +67,7 @@ func NewServer(dsn *string) *Server {
 func (s *Server) Start() error {
 	con, _, err := websocket.DefaultDialer.Dial(s.wsEndpoint, http.Header{})
 	if err != nil {
-		s.logger.Error(fmt.Sprintf("Could not connect to %q: %v\n", s.wsEndpoint, err))
+		s.logger.Error(fmt.Sprintf("Could not connect to websocket %q: %v\n", s.wsEndpoint, err))
 		os.Exit(1)
 	}
 
@@ -88,16 +93,10 @@ func (s *Server) Start() error {
 					Collection: collection,
 					RecordKey:  recordKey,
 					Cid:        cid,
+					Record:     rec,
 				}
 
-				switch record := rec.(type) {
-				case *bsky.FeedPost:
-					go s.recordHandlers.FeedPostHandler(op, record)
-					if err != nil {
-						s.logger.Error("FeedPost_RecordHandler", "msg", err)
-					}
-				}
-
+				s.workChan <- op
 			}
 			return nil
 		},

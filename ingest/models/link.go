@@ -16,6 +16,13 @@ var insertLinkQuery = `
 		, url
 		, original_url
 		, count
+		, title
+		, og_title
+		, og_description
+		, og_site_name
+		, og_image
+		, og_image_options
+		, og_optional
 	) VALUES (
 		$1
 		, $2
@@ -23,6 +30,14 @@ var insertLinkQuery = `
 		, $4
 		, $5
 		, $6
+		, $7
+		, $8
+		, $9
+		, $10
+		, $11
+		, $12
+		, $13
+
 	) ON CONFLICT (id) DO UPDATE SET
 	 	updated_at = NOW(),
 		count = links.count + 1
@@ -41,10 +56,17 @@ type Link struct {
 	CreatedAt *time.Time
 	UpdatedAt *time.Time
 
-	ID          string
-	OriginalUrl string
-	Url         string
-	Count       int
+	ID             string
+	OriginalUrl    string
+	Url            string
+	Count          int
+	Title          string
+	OGTitle        string
+	OGDescription  string
+	OGSiteName     string
+	OGImage        string
+	OGImageOptions []byte
+	OGOptional     []byte
 }
 
 func (l Link) LogValue() slog.Value {
@@ -63,6 +85,13 @@ func (l *Link) Insert(db *sqlx.DB) (bool, error) {
 		l.Url,
 		l.OriginalUrl,
 		1,
+		l.Title,
+		l.OGTitle,
+		l.OGDescription,
+		l.OGSiteName,
+		l.OGImage,
+		l.OGImageOptions,
+		l.OGOptional,
 	)
 
 	if err != nil {

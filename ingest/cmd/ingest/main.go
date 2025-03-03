@@ -2,6 +2,10 @@ package main
 
 import (
 	"flag"
+	"log"
+
+	"net/http"
+	_ "net/http/pprof"
 
 	ingest "github.com/heyts/skylinks"
 )
@@ -10,6 +14,9 @@ import (
 var dsn = flag.String("dsn", "postgres://skylink@localhost/skylink_development?sslmode=disable", "The datasource name to connect to")
 
 func main() {
-	server := ingest.NewServer(dsn)
+	go func() {
+		log.Println(http.ListenAndServe("localhost:6060", nil))
+	}()
+	server := ingest.NewServer(dsn, 10)
 	server.Start()
 }
