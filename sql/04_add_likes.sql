@@ -6,5 +6,6 @@ CREATE TABLE likes (
     id varchar,
     actor_id varchar
 );
-CREATE INDEX likes_pk_idx ON likes (id, actor_id);
+CREATE INDEX likes_pk_idx ON likes (id);
+CREATE INDEX likes_actor_idx ON likes (actor_id);
 COMMIT;
