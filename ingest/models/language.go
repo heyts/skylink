@@ -53,7 +53,7 @@ func NewLanguage(raw string) *Language {
 		return nil
 	}
 
-	now := time.Now()
+	now := time.Now().UTC()
 	var lang = &Language{
 		CreatedAt: &now,
 		UpdatedAt: &now,
@@ -107,7 +107,6 @@ func (l *Language) InsertFromPost(db *sqlx.DB, post_id string) (bool, error) {
 
 	if err != nil {
 		tx.Rollback()
-		fmt.Printf("%v", err)
 		return false, err
 	}
 	tx.Commit()

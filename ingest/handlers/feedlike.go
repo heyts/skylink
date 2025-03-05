@@ -8,13 +8,11 @@ import (
 )
 
 func (h *RecordHandler) FeedLikeHandler(op OpMeta, record *bsky.FeedLike) {
-	now := time.Now()
+	now := time.Now().UTC()
 
 	r := &models.Like{
 		CreatedAt: &now,
-		UpdatedAt: &now,
-		ID:        record.Subject.Cid,
-		ActorID:   op.Repo,
+		PostID:    record.Subject.Cid,
 	}
 
 	_, err := r.Insert(h.db)

@@ -105,7 +105,6 @@ func (a *Actor) InsertFromPost(db *sqlx.DB, post_id, actor_id string) (bool, err
 
 	if err != nil {
 		tx.Rollback()
-		fmt.Printf("%v", err)
 		return false, err
 	}
 	tx.Commit()

@@ -8,13 +8,11 @@ import (
 )
 
 func (h *RecordHandler) FeedRepostHandler(op OpMeta, record *bsky.FeedRepost) {
-	now := time.Now()
+	now := time.Now().UTC()
 
 	r := &models.Repost{
 		CreatedAt: &now,
-		UpdatedAt: &now,
-		ID:        record.Subject.Cid,
-		ActorID:   op.Repo,
+		PostID:    record.Subject.Cid,
 	}
 
 	_, err := r.Insert(h.db)

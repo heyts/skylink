@@ -16,7 +16,7 @@ var PostHasNoLinkErr = fmt.Errorf("Post contains no link")
 
 func (h *RecordHandler) FeedPostHandler(op OpMeta, record *bsky.FeedPost) {
 	// publishedAt, err := time.Parse(time.RFC3339Nano, record.CreatedAt)
-	createdAt := time.Now()
+	createdAt := time.Now().UTC()
 
 	mentions := []*models.Actor{}
 	tags := []*models.Tag{}
@@ -111,6 +111,7 @@ func (h *RecordHandler) FeedPostHandler(op OpMeta, record *bsky.FeedPost) {
 	actor, err := h.ParseActorFromDID(op.Repo)
 	if err != nil {
 		h.logger.Error("parse actor from DID", "err", err)
+		return
 	}
 
 	post := models.Post{

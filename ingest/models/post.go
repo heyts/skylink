@@ -66,7 +66,6 @@ func (p *Post) Insert(db *sqlx.DB) (bool, error) {
 	)
 
 	if err != nil {
-		fmt.Printf("err: %v", err)
 		tx.Rollback()
 		return false, err
 	}
