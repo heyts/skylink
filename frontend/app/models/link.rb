@@ -6,6 +6,8 @@ class Link < ApplicationRecord
     has_many :mentions, -> { distinct }, through: :posts
     has_many :languages, -> { distinct }, through: :posts
 
+    has_many :stats, through: :posts
+
 def pretty_title
     !og_title.blank? ? og_title : title
 end
@@ -38,6 +40,20 @@ def self.top(lang: "en", limit: 20, tags: [], since: 7.days.ago)
     top
 end
 
+def self.top(lang: "en", limit: 20, tags: [], since: 7.days.ago)
+    Link
+        .select(
+            :id,
+            "COUNT(distinct posts.id) posts_count", 
+            "SUM(stats.reposts_count) reposts_count", 
+            "SUM(stats.likes_count) likes_count", 
+            "COUNT(distinct posts.id) * 10 + SUM(stats.reposts_count) * 10 + SUM(stats.likes_count) score"
+        )
+        .joins(posts: [:actor, :languages, :tags, :stats])
+        .group(:id, "stats.")
+        .order(Arel.sql("COUNT(distinct posts.id) * 10 + SUM(stats.reposts_count) * 10 + SUM(stats.likes_count) DESC"))
+        .limit(20)
+end
 end
 
 
