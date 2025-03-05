@@ -1,6 +1,6 @@
 require "test_helper"
 
-class PostStatTest < ActiveSupport::TestCase
+class DailyStatTest < ActiveSupport::TestCase
   # test "the truth" do
   #   assert true
   # end
