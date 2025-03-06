@@ -72,6 +72,14 @@ ActiveRecord::Schema[8.0].define(version: 2025_03_06_232025) do
     t.index ["post_id"], name: "links_post_id_posts_idx"
   end
 
+  create_table "mentions_posts", id: false, force: :cascade do |t|
+    t.string "post_id"
+    t.string "actor_id"
+    t.index ["actor_id"], name: "index_mentions_posts_on_actor_id"
+    t.index ["post_id", "actor_id"], name: "mentions_posts_idx", unique: true
+    t.index ["post_id"], name: "index_mentions_posts_on_post_id"
+  end
+
   create_table "monthly_stats", id: false, force: :cascade do |t|
     t.datetime "ymdh", precision: nil
     t.string "post_id"
