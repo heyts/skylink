@@ -31,23 +31,27 @@ var insertTimeRangeStatQuery = `
 	ymdh, 
 	post_id, 
 	likes_count, 
-	reposts_count
+	reposts_count,
+	quotes_count
 	) SELECT 
 	 	v.ymdh, 
 		v.post_id, 
 		v.likes_count, 
-		v.reposts_count 
+		v.reposts_count,
+		v.quotes_count 
 	FROM (
 		VALUES (
 			date_trunc('{{ .period }}', $1::timestamp), 
 			$2, 
 			$3::integer, 
-			$4::integer
+			$4::integer,
+			$5::integer
 		) 
-	) v (ymdh, post_id, likes_count, reposts_count)
+	) v (ymdh, post_id, likes_count, reposts_count, quotes_count)
 	JOIN posts p on p.id = v.post_id 
 	ON CONFLICT (ymdh, post_id) DO UPDATE SET
 		likes_count = {{ .tablename }}.likes_count + excluded.likes_count,
+		quotes_count = {{ .tablename }}.quotes_count + excluded.quotes_count,
         reposts_count = {{ .tablename }}.reposts_count + excluded.reposts_count;
 `
 
@@ -60,6 +64,7 @@ type TimeRangeStat struct {
 	PostID       string
 	LikesCount   int64
 	RepostsCount int64
+	QuotesCount  int64
 }
 
 func (tr TimeRangeStat) LogValue() slog.Value {
@@ -80,6 +85,7 @@ func (tr *TimeRangeStat) Insert(db *sqlx.DB, period string) (bool, error) {
 		tr.PostID,
 		tr.LikesCount,
 		tr.RepostsCount,
+		tr.QuotesCount,
 	)
 
 	if err != nil {
@@ -103,6 +109,7 @@ func (tr *TimeRangeStat) InsertMultiple(db *sqlx.DB, periods []string) (bool, er
 			tr.PostID,
 			tr.LikesCount,
 			tr.RepostsCount,
+			tr.QuotesCount,
 		)
 
 		if err != nil {

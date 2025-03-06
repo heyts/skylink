@@ -25,7 +25,6 @@ func (p *Repost) Insert(db *sqlx.DB) (bool, error) {
 		YMDH:         p.CreatedAt,
 		PostID:       p.PostID,
 		RepostsCount: 1,
-		LikesCount:   0,
 	}
 
 	_, err := ps.InsertMultiple(db, []string{"hour", "day", "week", "month"})

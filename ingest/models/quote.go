@@ -7,24 +7,24 @@ import (
 	"github.com/jmoiron/sqlx"
 )
 
-type Like struct {
+type QuotePost struct {
 	CreatedAt *time.Time
 	PostID    string
 }
 
-func (l Like) LogValue() slog.Value {
+func (q QuotePost) LogValue() slog.Value {
 	return slog.GroupValue(
-		slog.String("id", l.PostID),
+		slog.String("id", q.PostID),
 	)
 }
 
-func (l *Like) Insert(db *sqlx.DB) (bool, error) {
+func (q *QuotePost) Insert(db *sqlx.DB) (bool, error) {
 	tx := db.MustBegin()
 
 	ps := TimeRangeStat{
-		YMDH:       l.CreatedAt,
-		PostID:     l.PostID,
-		LikesCount: 1,
+		YMDH:        q.CreatedAt,
+		PostID:      q.PostID,
+		QuotesCount: 1,
 	}
 
 	_, err := ps.InsertMultiple(db, []string{"hour", "day", "week", "month"})

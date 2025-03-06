@@ -15,12 +15,36 @@ import (
 var PostHasNoLinkErr = fmt.Errorf("Post contains no link")
 
 func (h *RecordHandler) FeedPostHandler(op OpMeta, record *bsky.FeedPost) {
-	// publishedAt, err := time.Parse(time.RFC3339Nano, record.CreatedAt)
+	publishedAt, err := time.Parse(time.RFC3339Nano, record.CreatedAt)
+	if err != nil {
+		h.logger.Error("published date parsing", "value", record.CreatedAt, "err", err)
+		return
+	}
+
 	createdAt := time.Now().UTC()
 
 	mentions := []*models.Actor{}
-	tags := []*models.Tag{}
+	tags := []string{}
 	links := []*models.Link{}
+
+	if record.Embed != nil && record.Embed.EmbedRecord != nil && record.Embed.EmbedRecord.Record != nil {
+		/* 	If the record has an EmbedRecord, it means that it is a Quote Post, we should just
+		   	create a stats record to increment the reposts value
+		*/
+
+		q := models.QuotePost{
+			CreatedAt: &createdAt,
+			PostID:    record.Embed.EmbedRecord.Record.Cid,
+		}
+
+		_, err := q.Insert(h.db)
+		if err != nil {
+			h.logger.Error("quote record", "cid", record.Embed.EmbedRecord.Record.Cid, "err", err)
+			return
+		}
+		h.logger.Info("QUO", "quote", q)
+		return
+	}
 
 	if len(record.Facets) > 0 {
 		for _, f := range record.Facets {
@@ -35,12 +59,7 @@ func (h *RecordHandler) FeedPostHandler(op OpMeta, record *bsky.FeedPost) {
 				}
 
 				if ft.RichtextFacet_Tag != nil {
-					tag := &models.Tag{
-						CreatedAt: &createdAt,
-						UpdatedAt: &createdAt,
-						ID:        utils.MD5Encode(ft.RichtextFacet_Tag.Tag),
-						Label:     ft.RichtextFacet_Tag.Tag,
-					}
+					tag := ft.RichtextFacet_Tag.Tag
 					tags = append(tags, tag)
 				}
 
@@ -114,24 +133,25 @@ func (h *RecordHandler) FeedPostHandler(op OpMeta, record *bsky.FeedPost) {
 		return
 	}
 
+	var language = ""
+
+	if len(record.Langs) != 0 {
+		segments := strings.Split(record.Langs[0], "-")
+		language = segments[0]
+	}
+
 	post := models.Post{
-		CreatedAt:  &createdAt,
-		UpdatedAt:  &createdAt,
+		CreatedAt:   &createdAt,
+		UpdatedAt:   &createdAt,
+		PublishedAt: &publishedAt,
+
 		ID:         op.Cid.String(),
 		Collection: op.Collection,
 		RecordKey:  op.RecordKey,
 		Text:       record.Text,
+		Language:   language,
+		Tags:       tags,
 		Actor:      actor,
-	}
-
-	languages := []*models.Language{}
-	if len(record.Langs) > 0 {
-		for _, lang := range record.Langs {
-			lang := models.NewLanguage(lang)
-			if lang != nil {
-				languages = append(languages, lang)
-			}
-		}
 	}
 
 	if len(links) > 0 {
@@ -145,33 +165,6 @@ func (h *RecordHandler) FeedPostHandler(op OpMeta, record *bsky.FeedPost) {
 		_, err = actor.Insert(h.db)
 		if err != nil {
 			h.logger.Error("insert actor", "err", err)
-		}
-
-		if len(languages) > 0 {
-			for _, lang := range languages {
-				h.logger.Info("LNG", "language", lang)
-				_, err = lang.Insert(h.db)
-				if err != nil {
-					h.logger.Error("insert language", "err", err)
-				}
-				_, err = lang.InsertFromPost(h.db, post.ID)
-				if err != nil {
-					h.logger.Error("insert language join", "err", err)
-				}
-			}
-		}
-
-		for _, tag := range tags {
-			h.logger.Info("TAG", "tag", tag)
-			_, err = tag.Insert(h.db)
-			if err != nil {
-				h.logger.Error("insert tag", "err", err)
-			}
-
-			tag.InsertFromPost(h.db, post.ID)
-			if err != nil {
-				h.logger.Error("insert tag join", "err", err)
-			}
 		}
 
 		for _, mention := range mentions {

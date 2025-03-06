@@ -6,17 +6,21 @@ import (
 	"time"
 
 	"github.com/jmoiron/sqlx"
+	"github.com/lib/pq"
 )
 
 var insertPostQuery = `
 	INSERT INTO posts(
 		  created_at
 		, updated_at
+		, published_at
 		, id
 		, collection
 		, record_key
 		, text
 		, actor_id
+		, language
+		, tags
 	) VALUES (
 		$1
 		, $2
@@ -25,12 +29,16 @@ var insertPostQuery = `
 		, $5
 		, $6
 		, $7
+		, $8
+		, $9
+		, $10
 	) ON CONFLICT (id) DO NOTHING;
 `
 
 type Post struct {
-	CreatedAt *time.Time
-	UpdatedAt *time.Time
+	CreatedAt   *time.Time
+	UpdatedAt   *time.Time
+	PublishedAt *time.Time
 
 	// ID represents the CID for the post
 	ID         string
@@ -38,7 +46,8 @@ type Post struct {
 	RecordKey  string
 	Text       string
 	Actor      *Actor
-	handle     string
+	Language   string
+	Tags       []string
 }
 
 func (p Post) LogValue() slog.Value {
@@ -58,11 +67,14 @@ func (p *Post) Insert(db *sqlx.DB) (bool, error) {
 	_, err := tx.Exec(insertPostQuery,
 		p.CreatedAt,
 		p.UpdatedAt,
+		p.PublishedAt,
 		p.ID,
 		p.Collection,
 		p.RecordKey,
 		p.Text,
 		p.Actor.ID,
+		p.Language,
+		pq.Array(p.Tags),
 	)
 
 	if err != nil {
