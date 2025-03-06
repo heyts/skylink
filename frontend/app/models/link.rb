@@ -2,9 +2,7 @@ class Link < ApplicationRecord
     has_and_belongs_to_many :posts
     
     has_many :actors, -> { distinct }, through: :posts
-    has_many :tags, -> { distinct }, through: :posts
     has_many :mentions, -> { distinct }, through: :posts
-    has_many :languages, -> { distinct }, through: :posts
 
     has_many :hourly_stats, through: :posts
     has_many :daily_stats, through: :posts
