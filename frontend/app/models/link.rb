@@ -45,7 +45,6 @@ def self.top(period: :hour, lang: "en", limit: 20, tags: [], since: 7.days.ago)
         .order(Arel.sql("#{rel}.score DESC NULLS LAST"))
         .limit(limit)
 end
-
 end
 
 
