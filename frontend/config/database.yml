@@ -33,15 +33,18 @@ production:
     
   cache:
     <<: *default
-    database: <%= ENV["DATABASE_CACHE_URL"] %>
+    url: <%= ENV["DATABASE_URL"] %>
+    database: skylink_production_cache
     migrations_paths: db/cache_migrate
-  
+ 
   queue:
     <<: *default
-    url: <%= ENV["DATABASE_QUEUE_URL"] %>
+    url: <%= ENV["DATABASE_URL"] %>
+    database: skylink_production_queue
     migrations_paths: db/queue_migrate
-    
+
   cable:
     <<: *default
-    database: <%= ENV["DATABASE_CABLE_URL"] %>
+    url: <%= ENV["DATABASE_URL"] %>
+    database: skylink_production_cable
     migrations_paths: db/cable_migrate
