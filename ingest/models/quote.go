@@ -19,20 +19,18 @@ func (q QuotePost) LogValue() slog.Value {
 }
 
 func (q *QuotePost) Insert(db *sqlx.DB) (bool, error) {
-	tx := db.MustBegin()
-
 	ps := TimeRangeStat{
 		YMDH:        q.CreatedAt,
 		PostID:      q.PostID,
 		QuotesCount: 1,
 	}
 
+	tx := db.MustBegin()
 	_, err := ps.InsertMultiple(db, []string{"hour", "day", "week", "month"})
 	if err != nil {
 		tx.Rollback()
 		return false, err
 	}
-
 	tx.Commit()
 	return true, nil
 }

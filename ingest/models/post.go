@@ -20,6 +20,8 @@ var insertPostQuery = `
 		, text
 		, actor_id
 		, language
+		, country
+		, locale
 		, tags
 	) VALUES (
 		$1
@@ -32,6 +34,8 @@ var insertPostQuery = `
 		, $8
 		, $9
 		, $10
+		, $11
+		, $12
 	) ON CONFLICT (id) DO NOTHING;
 `
 
@@ -47,6 +51,8 @@ type Post struct {
 	Text       string
 	Actor      *Actor
 	Language   string
+	Country    string
+	Locale     string
 	Tags       []string
 }
 
@@ -74,6 +80,8 @@ func (p *Post) Insert(db *sqlx.DB) (bool, error) {
 		p.Text,
 		p.Actor.ID,
 		p.Language,
+		p.Country,
+		p.Locale,
 		pq.Array(p.Tags),
 	)
 

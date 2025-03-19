@@ -2,6 +2,7 @@ package main
 
 import (
 	"flag"
+	"fmt"
 	"log"
 
 	"net/http"
@@ -18,5 +19,8 @@ func main() {
 		log.Println(http.ListenAndServe("localhost:6060", nil))
 	}()
 	server := ingest.NewServer(dsn, 10)
-	server.Start()
+	err := server.Start()
+	if err != nil {
+		fmt.Printf("Server: %v", err)
+	}
 }

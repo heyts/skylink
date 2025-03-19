@@ -150,7 +150,10 @@ func (d *DomainResolver) resolveURL(url *url.URL) (*url.URL, *LinkMeta, error) {
 		}
 		defer resp.Body.Close()
 
-		if resp.StatusCode == 200 {
+		s := resp.StatusCode
+
+		switch {
+		case s == http.StatusOK:
 			meta, err = d.serializeMeta(resp.Body)
 			if err != nil {
 				return nil, nil, err
@@ -162,18 +165,20 @@ func (d *DomainResolver) resolveURL(url *url.URL) (*url.URL, *LinkMeta, error) {
 			}
 
 			return url, meta, nil
-		}
 
-		if resp.StatusCode > 300 || resp.StatusCode < 308 {
+		case s >= http.StatusMovedPermanently && s <= http.StatusPermanentRedirect:
 			curr := resp.Header.Get("Location")
 			if curr == "" {
-				return nil, nil, fmt.Errorf("malformed \"location\" Header: %q", curr)
+				return nil, nil, fmt.Errorf("malformed \"location\" header: %q", curr)
 			}
 			url, err = url.Parse(curr)
 			if err != nil {
 				return nil, nil, err
 			}
 			redirectCount++
+
+		default:
+			return nil, nil, fmt.Errorf("unexpected http status code: %q, skipping", resp.Status)
 		}
 	}
 }
@@ -207,6 +212,9 @@ func (d *DomainResolver) ParseHeadSection(doc *html.Node) (*html.Node, error) {
 	var head *html.Node
 	var crawler func(*html.Node)
 	crawler = func(node *html.Node) {
+		if node == nil {
+			return
+		}
 		if node.Type == html.ElementNode && node.Data == "head" {
 			head = node
 			return
@@ -227,7 +235,12 @@ func (d *DomainResolver) ParseHeadSection(doc *html.Node) (*html.Node, error) {
 func (d *DomainResolver) ParseTitleTag(doc *html.Node) (string, error) {
 	var title *html.Node
 	var crawler func(*html.Node)
+
 	crawler = func(node *html.Node) {
+		if node == nil {
+			return
+		}
+
 		if node.Type == html.ElementNode && node.Data == "title" {
 			title = node
 			return
@@ -239,6 +252,7 @@ func (d *DomainResolver) ParseTitleTag(doc *html.Node) (string, error) {
 	}
 
 	crawler(doc)
+
 	if title != nil && title.FirstChild != nil {
 		return title.FirstChild.Data, nil
 	}

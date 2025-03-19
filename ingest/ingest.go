@@ -103,7 +103,6 @@ func (s *Server) Start() error {
 	}
 
 	sched := sequential.NewScheduler("myfirehose", rsc.EventHandler)
-	err = events.HandleRepoStream(context.Background(), con, sched, s.logger)
-	s.logger.Error("server", "err", err)
-	return err
+	return events.HandleRepoStream(context.Background(), con, sched, s.logger)
+
 }

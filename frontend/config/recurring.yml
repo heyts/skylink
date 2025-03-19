@@ -1,3 +1,22 @@
+development:
+  refresh_past_hour:
+    class: RefreshTopPastHourJob
+    queue: background
+    args: []
+    schedule: every 30 minute
+
+  refresh_past_day:
+    class: RefreshTopPastDayJob
+    queue: background
+    args: []
+    schedule: every 30 minute
+
+  refresh_past_week:
+    class: RefreshTopPastWeekJob
+    queue: background
+    args: []
+    schedule: every 30 minute
+
 # production:
 #   periodic_cleanup:
 #     class: CleanSoftDeletedRecordsJob

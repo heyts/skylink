@@ -1,31 +1,32 @@
 # Name of your application. Used to uniquely configure containers.
-service: frontend
+service: skylink
 
 # Name of the container image.
-image: your-user/frontend
+image: heyts/skylink-frontend
 
 # Deploy to these servers.
 servers:
   web:
-    - 192.168.0.1
-  # job:
-  #   hosts:
-  #     - 192.168.0.1
-  #   cmd: bin/jobs
+    - 138.197.116.10
+  
+  job:
+    hosts:
+      - 138.197.116.10
+    cmd: bin/jobs
 
 # Enable SSL auto certification via Let's Encrypt and allow for multiple apps on a single web server.
 # Remove this section when using multiple web servers and ensure you terminate SSL at your load balancer.
 #
 # Note: If using Cloudflare, set encryption mode in SSL/TLS setting to "Full" to enable CF-to-app encryption.
 proxy:
-  ssl: true
-  host: app.example.com
+  ssl: false
+  host: skylink.heyts.co
 
 # Credentials for your image host.
 registry:
   # Specify the registry server, if you're not using Docker Hub
-  # server: registry.digitalocean.com / ghcr.io / ...
-  username: your-user
+  server: ghcr.io
+  username: heyts
 
   # Always use an access token rather than real password when possible.
   password:
@@ -35,6 +36,9 @@ registry:
 env:
   secret:
     - RAILS_MASTER_KEY
+    - DATABASE_URL
+    - DATABASE_QUEUE_URL
+
   clear:
     # Run the Solid Queue Supervisor inside the web server's Puma process to do jobs.
     # When you start using multiple servers, you should split out job processing to a dedicated machine.
@@ -64,14 +68,14 @@ aliases:
 
 # Use a persistent storage volume for sqlite database files and local Active Storage files.
 # Recommended to change this to a mounted volume path that is backed up off server.
-volumes:
-  - "frontend_storage:/rails/storage"
+# volumes:
+#   - "frontend_storage:/rails/storage"
 
 
 # Bridge fingerprinted assets, like JS and CSS, between versions to avoid
 # hitting 404 on in-flight requests. Combines all files from new and old
 # version inside the asset_path.
-asset_path: /rails/public/assets
+# asset_path: /rails/public/assets
 
 # Configure the image builder.
 builder:
@@ -87,9 +91,8 @@ builder:
   #   - GITHUB_TOKEN
   #   - RAILS_MASTER_KEY
 
-# Use a different ssh user than root
-# ssh:
-#   user: app
+ssh:
+  keys: [ "~/.ssh/id_heyts" ]
 
 # Use accessory services (secrets come from .kamal/secrets).
 # accessories:

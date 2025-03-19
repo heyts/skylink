@@ -19,7 +19,6 @@ func (p Repost) LogValue() slog.Value {
 }
 
 func (p *Repost) Insert(db *sqlx.DB) (bool, error) {
-	tx := db.MustBegin()
 
 	ps := TimeRangeStat{
 		YMDH:         p.CreatedAt,
@@ -27,6 +26,7 @@ func (p *Repost) Insert(db *sqlx.DB) (bool, error) {
 		RepostsCount: 1,
 	}
 
+	tx := db.MustBegin()
 	_, err := ps.InsertMultiple(db, []string{"hour", "day", "week", "month"})
 	if err != nil {
 		tx.Rollback()

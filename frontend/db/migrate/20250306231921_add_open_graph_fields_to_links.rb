@@ -5,7 +5,7 @@ class AddOpenGraphFieldsToLinks < ActiveRecord::Migration[8.0]
     add_column :links, :og_description, :text
     add_column :links, :og_site_name, :string
     add_column :links, :og_image, :string
-    add_column :links, :og_image_options, :json
-    add_column :links, :og_optional, :json
+    add_column :links, :og_image_options, :jsonb
+    add_column :links, :og_optional, :jsonb
   end
 end

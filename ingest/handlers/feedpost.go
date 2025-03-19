@@ -133,11 +133,19 @@ func (h *RecordHandler) FeedPostHandler(op OpMeta, record *bsky.FeedPost) {
 		return
 	}
 
-	var language = ""
+	var (
+		language = ""
+		country  = ""
+		locale   = ""
+	)
 
 	if len(record.Langs) != 0 {
+		language = record.Langs[0]
 		segments := strings.Split(record.Langs[0], "-")
-		language = segments[0]
+		country = strings.ToLower(segments[0])
+		if len(segments) > 1 {
+			locale = segments[1]
+		}
 	}
 
 	post := models.Post{
@@ -150,6 +158,8 @@ func (h *RecordHandler) FeedPostHandler(op OpMeta, record *bsky.FeedPost) {
 		RecordKey:  op.RecordKey,
 		Text:       record.Text,
 		Language:   language,
+		Country:    country,
+		Locale:     locale,
 		Tags:       tags,
 		Actor:      actor,
 	}
@@ -168,6 +178,7 @@ func (h *RecordHandler) FeedPostHandler(op OpMeta, record *bsky.FeedPost) {
 		}
 
 		for _, mention := range mentions {
+			h.logger.Debug("Start MEN", "mention", mention)
 			_, err = mention.Insert(h.db)
 			if err != nil {
 				h.logger.Error("insert mention", "err", err)
@@ -182,6 +193,7 @@ func (h *RecordHandler) FeedPostHandler(op OpMeta, record *bsky.FeedPost) {
 		}
 
 		for _, link := range links {
+			h.logger.Debug("Start LNK", "link", link)
 			_, err = link.Insert(h.db)
 			if err != nil {
 				h.logger.Error("insert link", "err", err)

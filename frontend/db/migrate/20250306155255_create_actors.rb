@@ -13,7 +13,6 @@ class CreateActors < ActiveRecord::Migration[8.0]
       t.integer :posts_count
 
       t.index ["handle"], name: "actor_handle_idx"
-
     end
   end
 end

@@ -1,0 +1,13 @@
+<div id="link-<%= top.id %>" class="mt-6">
+<h2 class="text-xl lato-bold">
+    <span class="text-sky-800"><%= top_counter + 1 %>.</span> <%= link_to top.pretty_title, top.url, target: :blank, title: top.og_description, class: "text-sky-700" %> </h2>
+    <p class="link lato-regular text-md pl-8 mt-1 text-gray-700">
+        (<%= link_to top.domain, top.url, target: :blank, class: "underline" %>,  
+        <%= pluralize number_to_human(top.top_past_week.posts_count + top.top_past_week.quotes_count, :format => '%n%u', :units => { :thousand => 'K' }), 'post' %>,     
+            <%= pluralize number_to_human(top.top_past_week.reposts_count, :format => '%n%u', :units => { :thousand => 'K' }), 'repost' %>, 
+            <%= pluralize number_to_human(top.top_past_week.likes_count, :format => '%n%u', :units => { :thousand => 'K' }), 'like' %>, 
+            first seen <%= distance_of_time_in_words(top.top_past_week.age) %> ago, 
+            <%= link_to 'More Info', toplist_show_path(@period, top.id), class: "underline text-sky-600" %>
+        )
+    </p>
+</div>

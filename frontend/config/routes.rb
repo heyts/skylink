@@ -11,5 +11,7 @@ Rails.application.routes.draw do
 
   # Defines the root path route ("/")
   root "home#index"
-  get "/links/:id", to: "home#show", as: "home_show"
+
+  get "/top/:period/post/:id", to: "toplist#show", as: "toplist_show"
+  get "/top/:period", to: "toplist#index", as: "toplist_index"
 end

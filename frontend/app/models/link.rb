@@ -9,6 +9,10 @@ class Link < ApplicationRecord
     has_many :weekly_stats, through: :posts
     has_many :monthly_stats, through: :posts
 
+    has_one :top_past_hour
+    has_one :top_past_day
+    has_one :top_past_week
+
 def pretty_title
     !og_title.blank? ? og_title : title
 end
@@ -17,29 +21,31 @@ def locale
     og_optional["og:optional"] ? og_optional["og:optional"] : ""
 end
 
-def self.top(lang: "en", limit: 20, tags: [], since: 7.days.ago)
-    top = self
-        .select(
-            :id,
-            :title,
-            :og_title,
-            :og_description, 
-            :url, 
-            "COUNT(distinct posts.id) posts_count", 
-            "COUNT(distinct actor_id) actor_count"
-        )
-        .joins(posts:[:actor, :languages, :tags])
-        .where("posts.created_at > ? and languages.id = ?", since, lang)
-        .group(:id, :url)
-        .distinct
-        .order(Arel.sql("COUNT(distinct actor_id) DESC"))
-        .limit(limit)
-    
-    if !tags.blank?
-        top = top.where("tags.label IN (?)", tags)
-    end
-    top
+def domain
+    og_site_name.blank? ? url.split("/")[2].split('.').last(2).join('.') : og_site_name 
 end
+
+def self.top(period: :hour, lang: "en", limit: 20, tags: [], since: 7.days.ago)
+    periods = {
+        hour: TopPastHour,
+        day: TopPastDay,
+        week: TopPastWeek,
+    }
+    
+    if not periods.key? period
+        period = :hour
+    end 
+
+    rel = periods[period].name.underscore
+    self
+        .select("links.*", "#{rel}.score")
+        .includes(:top_past_week)
+        .joins(rel.to_sym)
+        .where("#{rel}.language = ?", lang)
+        .order(Arel.sql("#{rel}.score DESC NULLS LAST"))
+        .limit(limit)
+end
+
 end
 
 
