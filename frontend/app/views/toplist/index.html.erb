@@ -1,5 +1,5 @@
 <h1 class="w-full font-bold text-4xl">Most Shared Links in the Past <%= @period.to_s.titleize %></h1>
-<% if @top.present %>
+<% if @top.present? %>
 <p class="mt-6">Last updated: <%= distance_of_time_in_words(Time.now, @top[0].top_past_week.generated_at) %> ago</p>
 <% end %>
 <p>
