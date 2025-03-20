@@ -1,8 +1,8 @@
 # Name of your application. Used to uniquely configure containers.
-service: skylink
+service: skylink-ingest
 
 # Name of the container image.
-image: heyts/skylink-ingest
+image: heyts/skylink/ingest
 
 # Deploy to these servers.
 servers:
@@ -19,6 +19,8 @@ registry:
   password:
     - KAMAL_REGISTRY_PASSWORD
 
+proxy: false
+
 # Configure builder setup.
 builder:
   arch: amd64
@@ -30,7 +32,6 @@ builder:
 #
 env:
   secret:
-    - RAILS_MASTER_KEY
     - DATABASE_URL
 
 # Aliases are triggered with "bin/kamal <alias>". You can overwrite arguments on invocation:

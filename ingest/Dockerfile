@@ -12,4 +12,4 @@ FROM scratch
 COPY --from=builder /etc/ssl/ /etc/ssl/ 
 COPY --from=builder /skylink-ingest /skylink-ingest
 
-ENTRYPOINT ["/skylink-ingest", "-dsn", "$DATABASE_URL"]
+ENTRYPOINT ["./skylink-ingest"]

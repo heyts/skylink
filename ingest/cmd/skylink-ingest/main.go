@@ -4,6 +4,7 @@ import (
 	"flag"
 	"fmt"
 	"log"
+	"os"
 
 	"net/http"
 	_ "net/http/pprof"
@@ -11,7 +12,7 @@ import (
 	ingest "github.com/heyts/skylinks"
 )
 
-var dsn = flag.String("dsn", "postgres://skylink@localhost/skylink_development?sslmode=disable", "The datasource name to connect to")
+var dsn = flag.String("dsn", os.Getenv("DATABASE_URL"), "The datasource name to connect to")
 
 func main() {
 	go func() {
